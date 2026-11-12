@@ -1,0 +1,1381 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Замовлення обідів</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: #F5F4F0; color: #1a1a1a; min-height: 100vh;
+  }
+  header {
+    background: #fff; border-bottom: 1px solid #E8E6E0;
+    padding: 14px 20px; text-align: center;
+    position: sticky; top: 0; z-index: 20;
+  }
+  header h1 { font-size: 18px; font-weight: 600; }
+  header p  { font-size: 13px; color: #999; margin-top: 2px; }
+
+  .container { max-width: 560px; margin: 0 auto; padding: 16px 16px 140px; }
+
+  .section-title {
+    font-size: 12px; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.08em;
+    color: #999; margin: 20px 0 10px;
+  }
+  .field-group { display: flex; flex-direction: column; gap: 10px; margin-bottom: 16px; }
+  .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  input[type="text"], input[type="tel"] {
+    width: 100%; padding: 12px 14px;
+    border: 1.5px solid #E0DDD7; border-radius: 12px;
+    font-size: 15px; background: #fff; color: #1a1a1a;
+    outline: none; transition: border-color 0.15s;
+  }
+  input:focus { border-color: #1D9E75; }
+  input::placeholder { color: #bbb; }
+  textarea { color: #1a1a1a; }
+  textarea::placeholder { color: #bbb !important; }
+
+  /* ACCORDION */
+  .accordion { margin-bottom: 12px; border-radius: 18px; overflow: hidden; box-shadow: 0 2px 12px rgba(0,0,0,0.06); }
+  .accordion-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 18px 20px; cursor: pointer; user-select: none;
+  }
+  .accordion-header.complex { background: linear-gradient(135deg, #1D9E75, #15755a); color: #fff; }
+  .accordion-header.assort  { background: linear-gradient(135deg, #F4A623, #D4891A); color: #fff; }
+  .accordion-header.extra   { background: linear-gradient(135deg, #5B6EF5, #3A4ED4); color: #fff; }
+  .accordion-header.own     { background: linear-gradient(135deg, #E0603A, #B8441F); color: #fff; }
+  .accordion-title { font-size: 17px; font-weight: 700; }
+  .accordion-sub   { font-size: 13px; opacity: 0.85; margin-top: 3px; }
+  .accordion-right { display: flex; align-items: center; gap: 8px; }
+  .accordion-badge {
+    background: rgba(255,255,255,0.25); border-radius: 99px;
+    padding: 4px 12px; font-size: 13px; font-weight: 600;
+    white-space: nowrap; display: none;
+  }
+  .accordion-arrow {
+    width: 28px; height: 28px; background: rgba(255,255,255,0.2);
+    border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    transition: transform 0.3s; flex-shrink: 0;
+  }
+  .accordion.open .accordion-arrow { transform: rotate(180deg); }
+  .accordion-body {
+    background: #fff; max-height: 0; overflow: hidden;
+    transition: max-height 0.4s ease, padding 0.3s ease; padding: 0 16px;
+  }
+  .accordion.open .accordion-body { max-height: 30000px; padding: 16px; }
+
+  /* COMPLEX */
+  .complex-qty-row {
+    display: flex; align-items: center; justify-content: space-between;
+    background: #E8F7F1; border: 1.5px solid #1D9E75;
+    border-radius: 14px; padding: 14px 16px; margin-bottom: 20px;
+  }
+  .complex-qty-label { font-size: 15px; font-weight: 600; color: #1D9E75; }
+  .complex-qty-price { font-size: 13px; color: #1D9E75; margin-top: 2px; }
+
+  .step-block { margin-bottom: 20px; }
+  .step-header { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+  .step-num {
+    width: 26px; height: 26px; border-radius: 50%;
+    background: #1D9E75; color: #fff;
+    font-size: 13px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  }
+  .step-num.incomplete { background: #D0D0CC; }
+  .step-title    { font-size: 15px; font-weight: 600; }
+  .step-subtitle { font-size: 12px; color: #999; margin-top: 1px; }
+
+  /* Radio items */
+  .radio-item {
+    background: #F9F8F6; border-radius: 14px;
+    border: 1.5px solid #E8E6E0; padding: 12px;
+    display: flex; align-items: center; gap: 12px;
+    margin-bottom: 8px; cursor: pointer;
+    transition: border-color 0.2s, background 0.2s;
+    animation: fadeInUp 0.3s ease backwards;
+  }
+  .radio-item.selected { border-color: #1D9E75; background: #F0FCF8; }
+  .radio-item.alt {
+    padding: 8px 10px;
+    border-radius: 10px;
+  }
+  .radio-item.alt .dish-photo-sm { width: 38px; height: 38px; font-size: 16px; }
+  .radio-item.alt .dish-name-sm  { font-size: 13px; }
+  .radio-item.alt .dish-meta-sm  { font-size: 11px; }
+  .radio-item.alt .radio-circle  { width: 18px; height: 18px; }
+  .radio-item.alt .radio-dot     { width: 8px; height: 8px; }
+
+  .radio-circle {
+    width: 22px; height: 22px; border-radius: 50%;
+    border: 2px solid #D0CEC8; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    transition: border-color 0.15s;
+  }
+  .radio-item.selected .radio-circle { border-color: #1D9E75; }
+  .radio-dot { width: 10px; height: 10px; border-radius: 50%; background: #1D9E75; display: none; }
+  .radio-item.selected .radio-dot { display: block; }
+
+  /* Друге type switcher */
+  .type-row { display: flex; gap: 8px; margin-bottom: 12px; }
+  .type-btn {
+    flex: 1; padding: 10px 8px;
+    border: 1.5px solid #E0DDD7; border-radius: 12px;
+    background: #F9F8F6; font-size: 13px; font-weight: 500;
+    cursor: pointer; text-align: center;
+    transition: border-color 0.15s, background 0.15s;
+  }
+  .type-btn.active { border-color: #1D9E75; background: #E8F7F1; color: #1D9E75; }
+
+  .sub-label {
+    font-size: 12px; font-weight: 600; color: #999;
+    text-transform: uppercase; letter-spacing: .05em;
+    margin: 12px 0 8px;
+  }
+  .sub-label:first-child { margin-top: 0; }
+
+  /* Dish photo small */
+  .dish-photo-sm {
+    width: 52px; height: 52px; border-radius: 8px;
+    background: #EEECEA; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px; overflow: hidden;
+  }
+  .dish-photo-sm img { width: 100%; height: 100%; object-fit: cover; border-radius: 8px; }
+  .dish-info-sm { flex: 1; min-width: 0; }
+  .dish-name-sm { font-size: 14px; font-weight: 500; }
+  .dish-meta-sm { font-size: 12px; color: #aaa; margin-top: 2px; }
+
+  /* Dish cards (assort/extra) */
+  @keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes popIn {
+    0%  { transform: scale(0.9); opacity: 0; }
+    60% { transform: scale(1.03); }
+    100%{ transform: scale(1); opacity: 1; }
+  }
+  .dish-card {
+    background: #F9F8F6; border-radius: 14px;
+    border: 1.5px solid #E8E6E0; padding: 12px;
+    display: flex; align-items: center; gap: 12px;
+    margin-bottom: 10px;
+    transition: border-color 0.2s, background 0.2s;
+    animation: fadeInUp 0.3s ease backwards;
+  }
+  .dish-card.active { border-color: #1D9E75; background: #F0FCF8; }
+  .dish-photo {
+    width: 66px; height: 66px; border-radius: 10px;
+    background: #EEECEA; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 28px; overflow: hidden;
+  }
+  .dish-photo img { width: 100%; height: 100%; object-fit: cover; border-radius: 10px; }
+  .dish-info { flex: 1; min-width: 0; }
+  .dish-name  { font-size: 15px; font-weight: 500; }
+  .dish-meta  { font-size: 12px; color: #aaa; margin-top: 3px; }
+  .dish-price { font-size: 14px; font-weight: 600; color: #1D9E75; margin-top: 4px; }
+  .qty-control { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+  .qty-btn {
+    width: 34px; height: 34px; border-radius: 50%;
+    border: 1.5px solid #E0DDD7; background: #fff;
+    color: #1a1a1a; font-size: 20px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: background 0.12s, transform 0.1s; user-select: none;
+  }
+  .qty-btn:active { transform: scale(0.88); }
+  .qty-btn.plus { border-color: #1D9E75; color: #1D9E75; background: #E8F7F1; }
+  .qty-btn.plus:active { background: #C3E8DA; }
+  .qty-num {
+    font-size: 17px; font-weight: 600;
+    min-width: 22px; text-align: center; display: inline-block;
+  }
+  .qty-num.bump { animation: popIn 0.22s ease; }
+  .category-title { font-size: 16px; font-weight: 700; color: #1a1a1a; margin: 18px 0 10px; }
+  .category-title:first-child { margin-top: 0; }
+
+  /* Bottom bar */
+  .bottom-bar {
+    position: fixed; bottom: 0; left: 0; right: 0;
+    background: #fff; border-top: 1px solid #E8E6E0;
+    padding: 12px 16px;
+    display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    z-index: 10;
+  }
+  .total-info { display: flex; flex-direction: column; }
+  .total-label { font-size: 12px; color: #999; }
+  .total-value { font-size: 22px; font-weight: 700; }
+  .order-btn {
+    flex: 1; max-width: 260px; padding: 14px;
+    background: #1D9E75; color: #fff; border: none;
+    border-radius: 14px; font-size: 15px; font-weight: 600;
+    cursor: pointer; transition: background 0.15s, transform 0.1s;
+  }
+  .order-btn:hover:not(:disabled) { background: #178a64; }
+  .order-btn:active:not(:disabled) { transform: scale(0.97); }
+  .order-btn:disabled { background: #D0D0CC; color: #aaa; cursor: default; }
+  .spinner {
+    display: inline-block; width: 16px; height: 16px;
+    border: 2px solid rgba(255,255,255,0.4); border-top-color: #fff;
+    border-radius: 50%; animation: spin 0.7s linear infinite;
+    vertical-align: -3px; margin-right: 6px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .toast {
+    display: none; position: fixed; top: 20px; left: 50%;
+    transform: translateX(-50%);
+    background: #1a1a1a; color: #fff;
+    padding: 12px 22px; border-radius: 99px;
+    font-size: 14px; font-weight: 500; z-index: 200;
+    white-space: nowrap; box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+  }
+  .toast.error { background: #e24b4a; }
+  #receiptModal, #dinnerInfoModal {
+    display: none; position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.5); z-index: 150;
+    align-items: center; justify-content: center; padding: 20px;
+  }
+  .receipt-box {
+    background: #fff; border-radius: 20px; padding: 24px;
+    max-width: 400px; width: 100%; max-height: 80vh; overflow-y: auto;
+    animation: popIn 0.3s ease;
+  }
+  .receipt-item { display: flex; justify-content: space-between; padding: 5px 0; font-size: 14px; }
+  .loading-ph { text-align: center; color: #bbb; padding: 24px 0; font-size: 14px; }
+  /* DINNER */
+  .accordion-header.dinner { background: linear-gradient(135deg, #3D4A8A, #232B5C); color: #fff; }
+  .dn-row-note { font-size: 12px; color: #e24b4a; font-weight: 500; white-space: nowrap; }
+  .dn-notice {
+    background: #FFF6E0; border: 1.5px solid #F4A623; border-radius: 14px;
+    padding: 12px 14px; font-size: 13px; line-height: 1.45; margin: 14px 0;
+  }
+  .dn-free { font-size: 13px; color: #1D9E75; font-weight: 600; margin-bottom: 12px; }
+  .dn-total { display: flex; justify-content: space-between; align-items: baseline; font-weight: 700; font-size: 18px; margin: 6px 0 12px; }
+  .dn-btn {
+    width: 100%; padding: 14px; background: #1D9E75; color: #fff; border: none;
+    border-radius: 14px; font-size: 15px; font-weight: 600; cursor: pointer;
+  }
+  .dn-btn:disabled { background: #D0D0CC; color: #aaa; cursor: default; }
+  .dn-link { font-size: 13px; color: #1D9E75; text-decoration: underline; cursor: pointer; display: inline-block; margin-bottom: 10px; }
+  @media (max-width: 420px) {
+    .field-row { grid-template-columns: 1fr; }
+    .type-row { flex-direction: column; }
+  }
+</style>
+</head>
+<body>
+
+<div class="toast" id="toast"></div>
+
+<div id="receiptModal">
+  <div class="receipt-box">
+    <div style="text-align:center; margin-bottom:16px;">
+      <div style="font-size:40px;">🎉</div>
+      <h2 style="font-size:18px; font-weight:700; margin:8px 0 4px;">Замовлення прийнято!</h2>
+      <p style="font-size:14px; color:#1D9E75; font-weight:600;">Дякуємо! Очікуйте доставки 🚗</p>
+    </div>
+    <div id="receiptItems" style="border-top:1px solid #eee; border-bottom:1px solid #eee; padding:12px 0; margin-bottom:12px;"></div>
+    <div style="display:flex; justify-content:space-between; font-weight:700; font-size:16px; margin-bottom:16px;">
+      <span>Разом:</span>
+      <span id="receiptTotal" style="color:#1D9E75;"></span>
+    </div>
+    <button onclick="closeReceipt()" style="width:100%; padding:14px; background:#1D9E75; color:#fff; border:none; border-radius:14px; font-size:15px; font-weight:600; cursor:pointer;">Закрити</button>
+  </div>
+</div>
+
+<div id="dinnerInfoModal">
+  <div class="receipt-box">
+    <div style="text-align:center; margin-bottom:12px;">
+      <div style="font-size:40px;">🌙</div>
+      <h2 style="font-size:18px; font-weight:700; margin:8px 0 4px;">Вечеря додому</h2>
+    </div>
+    <div id="dinnerInfoText" style="font-size:14px; line-height:1.5; margin-bottom:16px;"></div>
+    <button class="dn-btn" onclick="closeDinnerInfo()">Зрозуміло</button>
+  </div>
+</div>
+
+<header>
+  <h1>🍽 Замовлення обідів</h1>
+  <p id="dateLabel"></p>
+</header>
+
+<div class="container">
+  <p class="section-title">Ваші дані</p>
+  <div class="field-group">
+    <div class="field-row">
+      <input type="text" id="clientName" placeholder="Ім'я" autocomplete="given-name" />
+      <input type="tel" id="clientPhone" placeholder="Телефон" autocomplete="tel" />
+    </div>
+    <input type="text" id="clientAddress" placeholder="Адреса доставки (вул., будинок, кв.)" autocomplete="street-address" />
+    <textarea id="clientComment" placeholder="Побажання (необов'язково)" rows="2" style="width:100%;padding:12px 14px;border:1.5px solid #E0DDD7;border-radius:12px;font-size:15px;background:#fff;color:#1a1a1a;outline:none;resize:none;font-family:inherit;transition:border-color 0.15s;" onfocus="this.style.borderColor='#1D9E75'" onblur="this.style.borderColor='#E0DDD7'"></textarea>
+
+  </div>
+
+  <!-- ACCORDION 1 -->
+  <div class="accordion" id="acc-complex">
+    <div class="accordion-header complex" onclick="toggleAccordion('complex')">
+      <div>
+        <div class="accordion-title">🥗 Комплексний обід</div>
+        <div class="accordion-sub" id="complex-sub">Натисніть щоб вибрати</div>
+      </div>
+      <div class="accordion-right">
+        <span class="accordion-badge" id="complex-badge"></span>
+        <div class="accordion-arrow">
+          <svg viewBox="0 0 14 14" fill="none" width="14" height="14"><path d="M2 5l5 5 5-5" stroke="white" stroke-width="2" stroke-linecap="round"/></svg>
+        </div>
+      </div>
+    </div>
+    <div class="accordion-body">
+      <div id="complexContent"><div class="loading-ph">Завантажуємо...</div></div>
+    </div>
+  </div>
+
+  <!-- ACCORDION 2 -->
+  <div class="accordion" id="acc-assort">
+    <div class="accordion-header assort" onclick="toggleAccordion('assort')">
+      <div>
+        <div class="accordion-title">🍲 Додати до комплексу</div>
+        <div class="accordion-sub" id="assort-sub">Натисніть щоб вибрати</div>
+      </div>
+      <div class="accordion-right">
+        <span class="accordion-badge" id="assort-badge"></span>
+        <div class="accordion-arrow">
+          <svg viewBox="0 0 14 14" fill="none" width="14" height="14"><path d="M2 5l5 5 5-5" stroke="white" stroke-width="2" stroke-linecap="round"/></svg>
+        </div>
+      </div>
+    </div>
+    <div class="accordion-body">
+      <div id="assortContent"><div class="loading-ph">Завантажуємо...</div></div>
+    </div>
+  </div>
+
+  <!-- ACCORDION 3 -->
+  <div class="accordion" id="acc-extra" style="display:none;">
+    <div class="accordion-header extra" onclick="toggleAccordion('extra')">
+      <div>
+        <div class="accordion-title">➕ Додатково</div>
+        <div class="accordion-sub" id="extra-sub">Натисніть щоб вибрати</div>
+      </div>
+      <div class="accordion-right">
+        <span class="accordion-badge" id="extra-badge"></span>
+        <div class="accordion-arrow">
+          <svg viewBox="0 0 14 14" fill="none" width="14" height="14"><path d="M2 5l5 5 5-5" stroke="white" stroke-width="2" stroke-linecap="round"/></svg>
+        </div>
+      </div>
+    </div>
+    <div class="accordion-body">
+      <div id="extraContent"><div class="loading-ph">Завантажуємо...</div></div>
+    </div>
+  </div>
+
+  <!-- ACCORDION 4: Власне виробництво -->
+   <div class="accordion" id="acc-own">
+    <div class="accordion-header own" onclick="toggleAccordion('own')">
+      <div>
+        <div class="accordion-title">🏭 Власне виробництво</div>
+        <div class="accordion-sub" id="own-sub">Натисніть щоб вибрати</div>
+      </div>
+      <div class="accordion-right">
+        <span class="accordion-badge" id="own-badge"></span>
+        <div class="accordion-arrow">
+          <svg viewBox="0 0 14 14" fill="none" width="14" height="14"><path d="M2 5l5 5 5-5" stroke="white" stroke-width="2" stroke-linecap="round"/></svg>
+        </div>
+      </div>
+    </div>
+    <div class="accordion-body">
+      <div id="ownContent"><div class="loading-ph">Завантажуємо...</div></div>
+    </div>
+  </div>
+
+  <!-- ACCORDION 5: Вечеря додому -->
+  <div class="accordion" id="acc-dinner">
+    <div class="accordion-header dinner" onclick="toggleAccordion('dinner')">
+      <div>
+        <div class="accordion-title">🌙 Вечеря додому</div>
+        <div class="accordion-sub" id="dinner-sub">Доставка безкоштовна</div>
+      </div>
+      <div class="accordion-right">
+        <div class="accordion-arrow">
+          <svg viewBox="0 0 14 14" fill="none" width="14" height="14"><path d="M2 5l5 5 5-5" stroke="white" stroke-width="2" stroke-linecap="round"/></svg>
+        </div>
+      </div>
+    </div>
+    <div class="accordion-body">
+      <div id="dinnerContent"><div class="loading-ph">Завантажуємо...</div></div>
+    </div>
+  </div>
+</div>
+
+<div class="bottom-bar">
+  <div class="total-info">
+    <span class="total-label">Сума замовлення</span>
+    <div class="total-value"><span id="totalSum">0</span> <span style="font-size:14px;font-weight:400;">грн</span></div>
+  </div>
+  <button class="order-btn" id="orderBtn" onclick="submitOrder()" disabled>Замовити</button>
+</div>
+
+<script>
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwDDcc2JS8W_ntRFbNhzNsoMmntZDrodn45tbUoNsBWulwHM7pHNOSjf23nWW4gIugi/exec";
+
+// ── State ──────────────────────────────────────────────
+let complexPrice = 0, complexQty = 0;
+let discounts = { first: 0, druhe: 0, salat: 0, napiy: 0 };
+let assortOpen = true;
+
+// Дані з таблиці — окремо дефолт (Комплекс=TRUE) і альтернативи (Активне=TRUE) по категоріях
+let def = { first: null, druhe: null, salat: null, napiy: null }; // дефолтні (1 шт кожна)
+let alt = { first: [], gotove: [], garnir: [], myaso: [], salat: [], napiy: [] }; // альтернативи
+
+// Вибір клієнта
+let sel = { first: null, druheType: null, gotove: null, garnir: null, myaso: null, salat: null, napiy: null };
+
+let assortDishes = [], assortQty = {};
+let extraItems   = [], extraQty  = {};
+let ownItems     = [], ownQty    = {};
+
+const CATEGORY_ORDER = ["Перші страви","Готові страви","М'ясні вироби","Гарніри","Салати","Напої","Інше"];
+
+// ── Init ───────────────────────────────────────────────
+function formatDateLabel(d) {
+  return d.toLocaleDateString("uk-UA", { weekday:"long", day:"numeric", month:"long" });
+}
+function updateDateLabel(cutoffMinutes) {
+  const now = new Date();
+  const nowMinutes = now.getHours() * 60 + now.getMinutes();
+  const d = new Date();
+  // До настання orderCutoff (J7) — замовлення на сьогодні, після — на завтра
+  if (typeof cutoffMinutes === "number" && nowMinutes >= cutoffMinutes) {
+    d.setDate(d.getDate() + 1);
+  }
+  document.getElementById("dateLabel").textContent = "на " + formatDateLabel(d);
+}
+updateDateLabel(840); // попереднє припущення (14:00), щоб не блимало неправильною датою; оновиться нижче реальним значенням з J7
+
+const saved = JSON.parse(localStorage.getItem("clientData") || "{}");
+if (saved.name)    document.getElementById("clientName").value    = saved.name;
+if (saved.phone)   document.getElementById("clientPhone").value   = saved.phone;
+if (saved.address) document.getElementById("clientAddress").value = saved.address;
+["clientName","clientPhone","clientAddress","clientComment"].forEach(id =>
+  document.getElementById(id).addEventListener("input", updateSummary)
+);
+
+loadComplex(); loadAssort(); loadExtra(); loadOwn();
+
+function updateAssortLock() {
+  const assortHeader = document.querySelector(".accordion-header.assort");
+  const assortSub    = document.getElementById("assort-sub");
+  // Вкладка завжди доступна для кліку — сервер сам фільтрує, які страви показувати
+  assortHeader.style.opacity = "";
+  assortHeader.style.cursor  = "";
+  assortHeader.onclick = () => toggleAccordion("assort");
+  const hasSelection = Object.values(assortQty).some(q => q > 0);
+  if (assortSub && !hasSelection) {
+    assortSub.textContent = assortOpen ? "Натисніть щоб вибрати" : "Обмежене меню — доступні комплексні страви";
+  }
+}
+
+// ── Accordion ──────────────────────────────────────────
+function toggleAccordion(id) {
+  const el = document.getElementById("acc-"+id);
+  const opening = !el.classList.contains("open");
+  el.classList.toggle("open");
+
+  if (id === "dinner" && opening) maybeShowDinnerInfo();
+
+  if (id === "complex" && opening && complexQty === 0) {
+    complexQty = 1;
+    sel.first  = def.first  ? def.first.name  : undefined;
+    sel.gotove = def.druhe  ? def.druhe.name  : undefined;
+    sel.druheType = def.druhe ? "готове" : (alt.garnir.length > 0 ? "combo" : null);
+    sel.garnir = alt.garnir.length > 0 ? alt.garnir[0].name : undefined;
+    sel.myaso  = alt.myaso.length  > 0 ? alt.myaso[0].name  : undefined;
+    sel.salat  = def.salat  ? def.salat.name  : undefined;
+    sel.napiy  = defaultNapiyName();
+    renderComplex();
+    updateComplexBadge();
+    updateSummary();
+  }
+}
+
+let complexDataLoaded = false;
+
+// ── COMPLEX ────────────────────────────────────────────
+async function loadComplex() {
+  try {
+    const res  = await fetch(SCRIPT_URL + "?action=complex&t=" + Date.now());
+    const data = await res.json();
+    complexPrice = Number(data.complexPrice) || 0;
+    discounts = data.discounts || { first: 0, druhe: 0, salat: 0, napiy: 0 };
+    assortOpen = data.assortOpen !== false;
+    updateDateLabel(data.orderCutoff);
+    console.log("Discounts loaded:", JSON.stringify(discounts));
+    // Оновлюємо вигляд акордеонів
+    updateAssortLock();
+
+    const items = data.items || [];
+
+    // Розбиваємо: isComplex = дефолт, isActive = альтернатива
+    items.forEach(d => {
+      const cat = (d.category || "").trim();
+      if (d.isComplex) {
+        if (cat === "Перші страви")  def.first = d;
+        if (cat === "Готові страви") def.druhe = d;
+        if (cat === "Салати")        def.salat = d;
+        if (cat === "Напої")         def.napiy = d;
+        // Гарнір і М'ясо в комплексі — це дефолт для combo
+        if (cat === "Гарніри")       alt.garnir.unshift(d);
+        if (cat === "М'ясні вироби") alt.myaso.unshift(d);
+      }
+      if (d.isActive) {
+        if (cat === "Перші страви")  alt.first.push(d);
+        if (cat === "Готові страви") alt.gotove.push(d);
+        if (cat === "Гарніри")       alt.garnir.push(d);
+        if (cat === "М'ясні вироби") alt.myaso.push(d);
+        if (cat === "Салати")        alt.salat.push(d);
+        if (cat === "Напої")         alt.napiy.push(d);
+      }
+    });
+
+    // Дефолтні вибори
+    sel.first  = def.first  ? def.first.name  : undefined;
+    sel.gotove = def.druhe  ? def.druhe.name  : undefined;
+    sel.druheType = def.druhe ? "готове" : (alt.garnir.length > 0 ? "combo" : null);
+    sel.garnir = alt.garnir.length > 0 ? alt.garnir[0].name : undefined;
+    sel.myaso  = alt.myaso.length  > 0 ? alt.myaso[0].name  : undefined;
+    sel.salat  = def.salat  ? def.salat.name  : undefined;
+    sel.napiy  = defaultNapiyName();
+
+    complexDataLoaded = true;
+    renderComplex();
+  } catch(e) {
+    document.getElementById("complexContent").innerHTML = '<p style="color:#e24b4a;text-align:center;">Помилка завантаження</p>';
+  }
+}
+
+function defaultNapiyName() {
+  if (!assortOpen) {
+    const restricted = alt.napiy.find(d => ["Компот","Узвар"].includes(d.name));
+    if (restricted) return restricted.name;
+  }
+  return def.napiy ? def.napiy.name : undefined;
+}
+
+function renderComplex() {
+  if (!def.first && !def.druhe && !def.salat && !def.napiy) {
+    const msg = complexDataLoaded ? "Комплекс тимчасово недоступний" : "Завантажуємо...";
+    document.getElementById("complexContent").innerHTML = `<p class="loading-ph">${msg}</p>`;
+    return;
+  }
+
+  let html = "";
+
+  // Лічильник кількості вгорі
+  html += `<div class="complex-qty-row">
+    <div>
+      <div class="complex-qty-label">Кількість комплексів</div>
+      <div class="complex-qty-price" id="complexPriceLabel">${complexPrice} грн / комплекс</div>
+    </div>
+    <div class="qty-control">
+      <button class="qty-btn" onclick="event.stopPropagation();changeComplexQty(-1)">−</button>
+      <span class="qty-num" id="complexQtyNum">${complexQty}</span>
+      <button class="qty-btn plus" onclick="event.stopPropagation();changeComplexQty(1)">+</button>
+    </div>
+  </div>`;
+
+  if (complexQty === 0) {
+    document.getElementById("complexContent").innerHTML = html;
+    updateComplexBadge(); updateSummary();
+    return;
+  }
+
+  // КРОК 1: Перша страва
+  const firstAll = assortOpen
+    ? [def.first, ...alt.first.filter(d => d.name !== (def.first && def.first.name))].filter(Boolean)
+    : [def.first].filter(Boolean);
+  html += renderStep(1, "Перша страва",
+    firstAll.length > 1 ? "Оберіть або залиште дефолт" : "",
+    renderRadioList(firstAll, "first", sel.first, def.first ? def.first.name : null)
+  );
+
+  // КРОК 2: Друге
+  const druheDefaultName = def.druhe ? def.druhe.name : null;
+  // Всі варіанти Готових страв = дефолт + альтернативи
+  const gotoveAll = assortOpen
+    ? [def.druhe, ...alt.gotove.filter(d => d.name !== druheDefaultName)].filter(Boolean)
+    : [def.druhe].filter(Boolean);
+
+  let druheHtml = "";
+
+  // Кнопки типу тільки якщо є гарніри або м'ясо і позиція не прибрана
+  const hasCombo = assortOpen && (alt.garnir.length > 0 || alt.myaso.length > 0);
+  const druheRemoved = sel.druheType === "готове"
+    ? sel.gotove === null
+    : sel.druheType === "combo"
+    ? (sel.garnir === null && sel.myaso === null)
+    : sel.gotove === null;
+  if (hasCombo && !druheRemoved) {
+    druheHtml += `<div class="type-row">
+      <button class="type-btn ${sel.druheType==="готове"?"active":""}" onclick="event.stopPropagation();setDruheType('готове')">🍛 Готова страва</button>
+      <button class="type-btn ${sel.druheType==="combo"?"active":""}" onclick="event.stopPropagation();setDruheType('combo')">🥩 Гарнір + М'ясо</button>
+    </div>`;
+  }
+
+  if (!sel.druheType || sel.druheType === "готове") {
+    druheHtml += renderRadioList(gotoveAll, "gotove", sel.gotove, druheDefaultName);
+  }
+
+  if (sel.druheType === "combo") {
+    if (alt.garnir.length) {
+      druheHtml += `<p class="sub-label">Гарнір</p>`;
+      druheHtml += renderRadioList(alt.garnir, "garnir", sel.garnir, null);
+    }
+    if (alt.myaso.length) {
+      druheHtml += `<p class="sub-label">М'ясний виріб</p>`;
+      druheHtml += renderRadioList(alt.myaso, "myaso", sel.myaso, null);
+    }
+  }
+
+  html += renderStep(2, "Друге", hasCombo ? "Готова страва або гарнір з м'ясом" : "", druheHtml);
+
+  // КРОК 3: Салат
+  const salatAll = assortOpen
+    ? [def.salat, ...alt.salat.filter(d => d.name !== (def.salat && def.salat.name))].filter(Boolean)
+    : [def.salat].filter(Boolean);
+  html += renderStep(3, "Салат",
+    salatAll.length > 1 ? "Оберіть або залиште дефолт" : "",
+    renderRadioList(salatAll, "salat", sel.salat, def.salat ? def.salat.name : null)
+  );
+
+  // КРОК 4: Напій
+  const restrictedNapiyNames = ["Компот", "Узвар"];
+  const napiyAll = assortOpen
+    ? [def.napiy, ...alt.napiy.filter(d => d.name !== (def.napiy && def.napiy.name))].filter(Boolean)
+    : alt.napiy.filter(d => restrictedNapiyNames.includes(d.name));
+  html += renderStep(4, "Напій", "Обов'язково оберіть",
+    renderRadioList(napiyAll, "napiy", sel.napiy, napiyAll.length > 1 ? null : (def.napiy ? def.napiy.name : null))
+  );
+
+  document.getElementById("complexContent").innerHTML = html;
+  updateComplexBadge(); updateSummary();
+  // Оновлюємо ціну в рядку кількості
+  const priceEl = document.getElementById("complexPriceLabel");
+  if (priceEl) {
+    const surcharge = getSurcharge();
+    const finalPrice = complexPrice + surcharge;
+    const surchargeText = surcharge > 0 ? ` (+${surcharge} грн)` : surcharge < 0 ? ` (${surcharge} грн)` : "";
+    priceEl.textContent = finalPrice + " грн / комплекс" + surchargeText;
+  }
+}
+
+// Map step num to sel key and discount
+const stepKeys  = { 1:"first", 2:"druhe", 3:"salat", 4:"napiy" };
+const stepDisc  = { 1:"first", 2:"druhe", 3:"salat", 4:"napiy" };
+
+function renderStep(num, title, subtitle, stepContent) {
+  const complete  = isStepComplete(num);
+  const key       = stepKeys[num];
+  const disc      = discounts[stepDisc[num]];
+  const druheIsRemoved = sel.druheType === "готове"
+    ? sel.gotove === null
+    : sel.druheType === "combo"
+    ? (sel.garnir === null && sel.myaso === null)
+    : (sel.gotove === null); // default type
+  const isRemoved = (num === 1 && sel.first === null) ||
+                    (num === 3 && sel.salat === null) ||
+                    (num === 4 && sel.napiy === null) ||
+                    (num === 2 && druheIsRemoved);
+
+  const canRemove = num === 1 || num === 2 || num === 3 || num === 4;
+  const stepNum = `<div class="step-num ${complete?"":"incomplete"}" 
+    onclick="${isRemoved ? "restoreStep("+num+")" : "removeStep("+num+")"}"
+    style="cursor:pointer; transition: transform 0.1s, background 0.15s;
+           ${isRemoved ? "background:#e24b4a;" : ""}"
+    title="${isRemoved ? "Відновити позицію" : "Прибрати позицію"}"
+  >${isRemoved ? "✕" : (complete ? "✓" : num)}</div>`;
+
+  return `<div class="step-block">
+    <div class="step-header">
+      <div style="display:flex;align-items:center;gap:10px;flex:1;">
+        ${stepNum}
+        <div>
+          <div class="step-title">${title}</div>
+          ${isRemoved ? `<div class="step-subtitle" style="color:#e24b4a;">прибрано ${disc} грн</div>` : (subtitle ? `<div class="step-subtitle">${subtitle}</div>` : "")}
+        </div>
+      </div>
+    </div>
+    ${isRemoved ? "" : stepContent}
+  </div>`;
+}
+
+function countRemoved() {
+  let removed = 0;
+  if (sel.first  === null) removed++;
+  if (sel.salat  === null) removed++;
+  if (sel.napiy  === null) removed++;
+  if (sel.druheType === "готове" && sel.gotove === null) removed++;
+  if (sel.druheType === "combo"  && sel.garnir === null && sel.myaso === null) removed++;
+  return removed;
+}
+
+function removeStep(num) {
+  // Без обмежень на кількість прибраних позицій
+  if (num === 1) sel.first = null;
+  if (num === 2) {
+    if (sel.druheType === "готове") sel.gotove = null;
+    else if (sel.druheType === "combo") { sel.garnir = null; sel.myaso = null; }
+    else sel.gotove = null;
+  }
+  if (num === 3) sel.salat = null;
+  if (num === 4) sel.napiy = null;
+  renderComplex();
+}
+
+function restoreStep(num) {
+  if (num === 1) sel.first  = def.first  ? def.first.name  : (alt.first[0]  ? alt.first[0].name  : undefined);
+  if (num === 2) {
+    sel.druheType = "готове";
+    sel.gotove = def.druhe ? def.druhe.name : (alt.gotove[0] ? alt.gotove[0].name : undefined);
+    sel.garnir = undefined; sel.myaso = undefined;
+  }
+  if (num === 3) sel.salat  = def.salat  ? def.salat.name  : (alt.salat[0]  ? alt.salat[0].name  : undefined);
+  if (num === 4) sel.napiy  = defaultNapiyName();
+  renderComplex();
+}
+
+function isStepComplete(n) {
+  // null означає що клієнт свідомо прибрав позицію — це теж complete
+  if (n === 1) return sel.first  !== undefined;
+  if (n === 2) {
+    if (!sel.druheType && def.druhe) return sel.gotove !== undefined;
+    if (sel.druheType === "готове") return sel.gotove !== undefined;
+    if (sel.druheType === "combo")  return sel.garnir !== undefined && sel.myaso !== undefined;
+    return false;
+  }
+  if (n === 3) return sel.salat !== undefined;
+  if (n === 4) return sel.napiy !== undefined;
+  return false;
+}
+
+function renderRadioList(items, group, selected, defaultName) {
+  if (!items.length) return '<p style="font-size:13px;color:#aaa;padding:8px 0;">Немає варіантів</p>';
+  const singleOption = items.length === 1;
+  return items.map(d => {
+    const isUrl = d.photo && (d.photo.startsWith("http") || d.photo.startsWith("/"));
+    const photo = isUrl
+      ? `<div class="dish-photo-sm"><img src="${d.photo}" alt="${d.name}"/></div>`
+      : `<div class="dish-photo-sm">${d.photo || "🍽"}</div>`;
+    const isSelected = selected === d.name;
+    const isAlt = defaultName && d.name !== defaultName;
+    return `<div class="radio-item ${isSelected?"selected":""} ${isAlt?"alt":""}"
+      ${singleOption ? "" : `onclick="selectStep('${group}','${d.name.replace(/'/g,"\\'")}')"`}>
+      ${photo}
+      <div class="dish-info-sm">
+        <div class="dish-name-sm">${d.name}</div>
+        <div class="dish-meta-sm">${d.kcal ? d.kcal+" ккал" : ""}</div>
+      </div>
+      ${singleOption ? "" : `<div class="radio-circle"><div class="radio-dot"></div></div>`}
+    </div>`;
+  }).join("");
+}
+
+function selectStep(group, name) {
+  if (group === "first")  sel.first  = name;
+  if (group === "gotove") sel.gotove = name;
+  if (group === "garnir") sel.garnir = name;
+  if (group === "myaso")  sel.myaso  = name;
+  if (group === "salat")  sel.salat  = name;
+  if (group === "napiy")  sel.napiy  = name;
+  renderComplex();
+}
+
+function setDruheType(type) {
+  sel.druheType = type;
+  if (type === "готове") {
+    sel.garnir = undefined; sel.myaso = undefined;
+    if (!sel.gotove || sel.gotove === undefined) {
+      sel.gotove = def.druhe ? def.druhe.name : (alt.gotove[0] ? alt.gotove[0].name : undefined);
+    }
+  }
+  if (type === "combo") {
+    sel.gotove = undefined;
+    if (sel.garnir === null) sel.garnir = undefined;
+    if (sel.myaso === null) sel.myaso = undefined;
+  }
+  renderComplex();
+}
+
+function changeComplexQty(delta) {
+  complexQty = Math.max(0, complexQty + delta);
+  if (complexQty === 0) {
+    sel = { first: null, druheType: null, gotove: null, garnir: null, myaso: null, salat: null, napiy: null };
+  } else if (complexQty === 1) {
+    // відновлюємо дефолти
+    sel.first  = def.first  ? def.first.name  : undefined;
+    sel.gotove = def.druhe  ? def.druhe.name  : undefined;
+    sel.druheType = def.druhe ? "готове" : (alt.garnir.length > 0 ? "combo" : null);
+    sel.garnir = alt.garnir.length > 0 ? alt.garnir[0].name : undefined;
+    sel.myaso  = alt.myaso.length  > 0 ? alt.myaso[0].name  : undefined;
+    sel.salat  = def.salat  ? def.salat.name  : undefined;
+    sel.napiy  = defaultNapiyName();
+  }
+  renderComplex();
+}
+
+function isComplexComplete() {
+  if (complexQty === 0) return true;
+  return isStepComplete(1) && isStepComplete(2) && isStepComplete(3) && isStepComplete(4);
+}
+
+function getSurcharge() {
+  let s = 0;
+  const allItems = [...(def.first ? [def.first] : []), ...alt.first,
+                   ...(def.druhe ? [def.druhe] : []), ...alt.gotove,
+                   ...alt.garnir, ...alt.myaso,
+                   ...(def.salat ? [def.salat] : []), ...alt.salat,
+                   ...(def.napiy ? [def.napiy] : []), ...alt.napiy];
+
+  // Надбавки за вибрані позиції
+  const selectedNames = [sel.first, sel.gotove, sel.garnir, sel.myaso, sel.salat, sel.napiy].filter(Boolean);
+  selectedNames.forEach(name => {
+    const item = allItems.find(d => d && d.name === name);
+    if (item && item.surcharge) s += Number(item.surcharge) || 0;
+  });
+
+  // Знижки за прибрані позиції
+  if (sel.first  === null && complexQty > 0) s += discounts.first;
+  if (sel.gotove === null && sel.druheType !== "combo" && complexQty > 0) s += discounts.druhe;
+  if (sel.garnir === null && sel.druheType === "combo" && complexQty > 0) s += discounts.druhe;
+  if (sel.salat  === null && complexQty > 0) s += discounts.salat;
+  if (sel.napiy  === null && complexQty > 0) s += discounts.napiy;
+
+  return s;
+}
+
+function getComplexTotal() {
+  if (complexQty === 0) return 0;
+  return (complexPrice + getSurcharge()) * complexQty;
+}
+
+function updateComplexBadge() {
+  const total = getComplexTotal();
+  const badge = document.getElementById("complex-badge");
+  const sub   = document.getElementById("complex-sub");
+  if (total > 0) {
+    badge.style.display = "inline-block";
+    badge.textContent   = total + " грн";
+    sub.textContent     = complexQty + (complexQty === 1 ? " комплекс" : " комплекси");
+  } else {
+    badge.style.display = "none";
+    sub.textContent     = "Натисніть щоб вибрати";
+  }
+}
+
+// ── ASSORT ─────────────────────────────────────────────
+async function loadAssort() {
+  try {
+    const res  = await fetch(SCRIPT_URL + "?action=assort");
+    const data = await res.json();
+    assortDishes = (data.dishes || []).map((d,i) => ({...d, id:"a"+i}));
+    assortDishes.forEach(d => assortQty[d.id] = 0);
+    if (data.assortOpen !== undefined) assortOpen = data.assortOpen !== false;
+    renderAssort();
+    updateAssortLock();
+  } catch(e) {
+    document.getElementById("assortContent").innerHTML = '<p style="color:#e24b4a;text-align:center;">Помилка завантаження</p>';
+  }
+}
+
+function renderAssort() {
+  const grouped = {};
+  assortDishes.forEach(d => {
+    const cat = d.category || "Інше";
+    if (!grouped[cat]) grouped[cat] = [];
+    grouped[cat].push(d);
+  });
+  const cats = Object.keys(grouped).sort((a,b) => {
+    const ia = CATEGORY_ORDER.indexOf(a), ib = CATEGORY_ORDER.indexOf(b);
+    return (ia===-1?999:ia)-(ib===-1?999:ib);
+  });
+  document.getElementById("assortContent").innerHTML = cats.map(cat => `
+    <div>
+      <h3 class="category-title">${cat}</h3>
+      ${grouped[cat].map(d => dishCardHtml(d,"assort")).join("")}
+    </div>`).join("") || '<p class="loading-ph">Тимчасово немає активних позицій</p>';
+}
+
+// ── EXTRA ──────────────────────────────────────────────
+async function loadExtra() {
+  try {
+    const res  = await fetch(SCRIPT_URL + "?action=extra");
+    const data = await res.json();
+    extraItems = (data.items || []).map((d,i) => ({...d, id:"e"+i}));
+    extraItems.forEach(d => extraQty[d.id] = 0);
+    renderExtra();
+  } catch(e) {
+    document.getElementById("extraContent").innerHTML = '<p style="color:#e24b4a;text-align:center;">Помилка завантаження</p>';
+  }
+}
+
+function renderExtra() {
+  document.getElementById("extraContent").innerHTML =
+    extraItems.map(d => dishCardHtml(d,"extra")).join("") ||
+    '<p class="loading-ph">Тимчасово немає активних позицій</p>';
+}
+
+// ── OWN (Власне виробництво) ───────────────────────────
+async function loadOwn() {
+  try {
+    const res  = await fetch(SCRIPT_URL + "?action=own");
+    const data = await res.json();
+    ownItems = (data.items || []).map((d,i) => ({...d, id:"o"+i}));
+    ownItems.forEach(d => ownQty[d.id] = 0);
+    renderOwn();
+  } catch(e) {
+    document.getElementById("ownContent").innerHTML = '<p style="color:#e24b4a;text-align:center;">Помилка завантаження</p>';
+  }
+}
+
+function renderOwn() {
+  document.getElementById("acc-own").style.display = ownItems.length ? "" : "none";
+  document.getElementById("ownContent").innerHTML =
+    ownItems.map(d => dishCardHtml(d,"own")).join("") ||
+    '<p class="loading-ph">Тимчасово немає активних позицій</p>';
+}
+
+function updateOwnBadge() {
+  const total = ownItems.reduce((s,d) => s+(ownQty[d.id]||0)*(Number(d.price)||0), 0);
+  const count = ownItems.reduce((s,d) => s+(ownQty[d.id]||0), 0);
+  const badge = document.getElementById("own-badge");
+  const sub   = document.getElementById("own-sub");
+  if (total > 0) { badge.style.display="inline-block"; badge.textContent=total+" грн"; sub.textContent=count+" поз."; }
+  else { badge.style.display="none"; sub.textContent="Натисніть щоб вибрати"; }
+}
+
+function dishCardHtml(d, tab) {
+  const isUrl = d.photo && (d.photo.startsWith("http") || d.photo.startsWith("/"));
+  const photo = isUrl
+    ? `<div class="dish-photo"><img src="${d.photo}" alt="${d.name}"/></div>`
+    : `<div class="dish-photo">${d.photo || "🍽"}</div>`;
+  const q = tab === "assort" ? (assortQty[d.id]||0) : tab === "own" ? (ownQty[d.id]||0) : (extraQty[d.id]||0);
+  return `<div class="dish-card ${q>0?"active":""}" id="card-${d.id}">
+    ${photo}
+    <div class="dish-info">
+      <div class="dish-name">${d.name}</div>
+      <div class="dish-meta">${d.kcal ? d.kcal+" ккал" : ""}</div>
+      <div class="dish-price">${d.price} грн</div>
+    </div>
+    <div class="qty-control">
+      <button class="qty-btn" onclick="changeDish('${d.id}','${tab}',-1)">−</button>
+      <span class="qty-num" id="qty-${d.id}">${q}</span>
+      <button class="qty-btn plus" onclick="changeDish('${d.id}','${tab}',1)">+</button>
+    </div>
+  </div>`;
+}
+
+function changeDish(id, tab, delta) {
+  const qtyMap = tab === "assort" ? assortQty : tab === "own" ? ownQty : extraQty;
+  qtyMap[id] = Math.max(0, (qtyMap[id]||0) + delta);
+  document.getElementById("card-"+id).classList.toggle("active", qtyMap[id] > 0);
+  const el = document.getElementById("qty-"+id);
+  el.textContent = qtyMap[id];
+  el.classList.remove("bump"); void el.offsetWidth; el.classList.add("bump");
+  updateAssortBadge(); updateExtraBadge(); updateOwnBadge(); updateSummary();
+}
+
+function updateAssortBadge() {
+  const total = assortDishes.reduce((s,d) => s+(assortQty[d.id]||0)*(Number(d.price)||0), 0);
+  const count = assortDishes.reduce((s,d) => s+(assortQty[d.id]||0), 0);
+  const badge = document.getElementById("assort-badge");
+  const sub   = document.getElementById("assort-sub");
+  if (total > 0) { badge.style.display="inline-block"; badge.textContent=total+" грн"; sub.textContent=count+" поз."; }
+  else { badge.style.display="none"; sub.textContent="Натисніть щоб вибрати"; }
+}
+
+function updateExtraBadge() {
+  const total = extraItems.reduce((s,d) => s+(extraQty[d.id]||0)*(Number(d.price)||0), 0);
+  const count = extraItems.reduce((s,d) => s+(extraQty[d.id]||0), 0);
+  const badge = document.getElementById("extra-badge");
+  const sub   = document.getElementById("extra-sub");
+  if (total > 0) { badge.style.display="inline-block"; badge.textContent=total+" грн"; sub.textContent=count+" поз."; }
+  else { badge.style.display="none"; sub.textContent="Натисніть щоб вибрати"; }
+}
+
+// ── Summary ────────────────────────────────────────────
+function updateSummary() {
+  const total = getComplexTotal()
+    + assortDishes.reduce((s,d) => s+(assortQty[d.id]||0)*(Number(d.price)||0), 0)
+    + extraItems.reduce((s,d)   => s+(extraQty[d.id]||0)*(Number(d.price)||0),  0)
+    + ownItems.reduce((s,d)     => s+(ownQty[d.id]||0)*(Number(d.price)||0),    0);
+  document.getElementById("totalSum").textContent = total;
+
+  const name    = document.getElementById("clientName").value.trim();
+  const phone   = document.getElementById("clientPhone").value.trim();
+  const address = document.getElementById("clientAddress").value.trim();
+  const comment = document.getElementById("clientComment").value.trim();
+
+  // Замовлення без страв дозволене, тільки якщо заповнено ім'я, телефон, адреса і коментар
+  const emptyOrderBlocked = total === 0 && !comment;
+
+  document.getElementById("orderBtn").disabled =
+    !name || !phone || !address || !isComplexComplete() || emptyOrderBlocked;
+}
+
+// ── Submit ─────────────────────────────────────────────
+async function submitOrder() {
+  const name    = document.getElementById("clientName").value.trim();
+  const phone   = document.getElementById("clientPhone").value.trim();
+  const address = document.getElementById("clientAddress").value.trim();
+
+  const btn = document.getElementById("orderBtn");
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span>Відправляємо...';
+
+  const dishes = [];
+  const receiptItems = [];
+
+  if (complexQty > 0) {
+    // Записуємо кожну позицію окремо в таблицю
+    if (sel.first)  dishes.push({ name: sel.first,  qty: complexQty });
+    if (sel.druheType === "combo") {
+      if (sel.garnir) dishes.push({ name: sel.garnir, qty: complexQty });
+      if (sel.myaso)  dishes.push({ name: sel.myaso,  qty: complexQty });
+    } else if (sel.gotove) {
+      dishes.push({ name: sel.gotove, qty: complexQty });
+    }
+    if (sel.salat) dishes.push({ name: sel.salat, qty: complexQty });
+    if (sel.napiy) dishes.push({ name: sel.napiy, qty: complexQty });
+    // В чеку показуємо як комплекс
+    receiptItems.push({ label: `Комплексний обід × ${complexQty}`, sum: getComplexTotal() });
+
+    const details = [];
+    if (sel.first)  details.push("Перше: " + sel.first);
+    if (sel.druheType === "combo") {
+      if (sel.garnir) details.push("Гарнір: " + sel.garnir);
+      if (sel.myaso)  details.push("М'ясо: " + sel.myaso);
+    } else if (sel.gotove) {
+      details.push("Друге: " + sel.gotove);
+    }
+    if (sel.salat) details.push("Салат: " + sel.salat);
+    if (sel.napiy) details.push("Напій: " + sel.napiy);
+    if (details.length) {
+      receiptItems.push({ label: details.join(" · "), sum: null, small: true });
+    }
+  }
+
+  assortDishes.filter(d => assortQty[d.id] > 0).forEach(d => {
+    dishes.push({ name: d.name, qty: assortQty[d.id] });
+    receiptItems.push({ label: `${d.name} × ${assortQty[d.id]}`, sum: assortQty[d.id]*(Number(d.price)||0) });
+  });
+  extraItems.filter(d => extraQty[d.id] > 0).forEach(d => {
+    dishes.push({ name: d.name, qty: extraQty[d.id] });
+    receiptItems.push({ label: `${d.name} × ${extraQty[d.id]}`, sum: extraQty[d.id]*(Number(d.price)||0) });
+  });
+  ownItems.filter(d => ownQty[d.id] > 0).forEach(d => {
+    dishes.push({ name: d.name, qty: ownQty[d.id] });
+    receiptItems.push({ label: `${d.name} × ${ownQty[d.id]}`, sum: ownQty[d.id]*(Number(d.price)||0) });
+  });
+
+  const totalSum = receiptItems.filter(i => i.sum !== null).reduce((s,i) => s+i.sum, 0);
+  const comment = document.getElementById("clientComment").value.trim();
+  const payload  = { name, phone, address, comment, dishes, total: totalSum };
+
+  localStorage.setItem("clientData", JSON.stringify({ name, phone, address }));
+
+  try {
+  const res = await fetch(SCRIPT_URL + "?action=order&data=" + encodeURIComponent(JSON.stringify(payload)));
+  const result = await res.json();
+  if (result.status !== "ok") {
+    showToast("Помилка: " + (result.message || "спробуйте ще раз"), true);
+    btn.disabled = false;
+    btn.innerHTML = "Замовити";
+    return;
+  }
+} catch (err) {
+  showToast("Помилка з'єднання. Спробуйте ще раз", true);
+  btn.disabled = false;
+  btn.innerHTML = "Замовити";
+  return;
+}
+
+document.getElementById("receiptItems").innerHTML = receiptItems.map(i =>
+  i.small
+    ? `<div style="font-size:12px;color:#999;padding:2px 0 6px;">${i.label}</div>`
+    : `<div class="receipt-item"><span>${i.label}</span><span style="font-weight:500;">${i.sum} грн</span></div>`
+).join("");
+document.getElementById("receiptTotal").textContent = totalSum + " грн";
+document.getElementById("receiptModal").style.display = "flex";
+
+complexQty = 0;
+sel = { first: null, druheType: null, gotove: null, garnir: null, myaso: null, salat: null, napiy: null };
+document.getElementById("acc-complex").classList.remove("open");
+assortDishes.forEach(d => assortQty[d.id] = 0);
+extraItems.forEach(d => extraQty[d.id] = 0);
+ownItems.forEach(d => ownQty[d.id] = 0);
+
+renderComplex(); renderAssort(); renderExtra(); renderOwn();
+updateAssortBadge(); updateExtraBadge(); updateOwnBadge();
+btn.innerHTML = "Замовити";
+updateSummary();
+}
+
+function showToast(message, isError) {
+  const el = document.getElementById("toast");
+  el.textContent = message;
+  el.className = "toast" + (isError ? " error" : "");
+  el.style.display = "block";
+  setTimeout(() => { el.style.display = "none"; }, 3000);
+}
+
+function closeReceipt() {
+  document.getElementById("receiptModal").style.display = "none";
+}
+
+// ══ ВЕЧЕРЯ ДОДОМУ ═══════════════════════════════════════
+let dn = {
+  menu: null, error: false,
+  sel: { main: 0, side: 0, salad: 0, drink: 0 },
+  saladOn: true, drinkOn: true, dessertQty: 0, cutlery: false,
+  qty: 1, sending: false
+};
+
+async function loadDinner() {
+  try {
+    const res  = await fetch(SCRIPT_URL + "?action=dinner&t=" + Date.now());
+    const data = await res.json();
+    if (data.status !== "ok") throw new Error("bad status");
+    dn.menu = data;
+    // Якщо салату або напою немає в меню — вважаємо його прибраним (ціна без нього)
+    if (!data.dishes.salad.length) dn.saladOn = false;
+    if (!data.dishes.drink.length) dn.drinkOn = false;
+  } catch (e) {
+    dn.error = true;
+  }
+  renderDinner();
+}
+
+function dinnerPerSet() {
+  const m = dn.menu;
+  if (!m) return 0;
+  return m.price
+    - (dn.saladOn ? 0 : m.discNoSalad)
+    - (dn.drinkOn ? 0 : m.discNoDrink);
+}
+
+function dinnerTotal() {
+  if (!dn.menu) return 0;
+  return dinnerPerSet() * dn.qty + dn.dessertQty * dn.menu.dessert;
+}
+
+function dnIsOn(role) {
+  if (role === "salad") return dn.saladOn;
+  if (role === "drink") return dn.drinkOn;
+  return true;
+}
+
+function dnList(role, items) {
+  if (!items.length) return "";
+  const optional = role === "salad" || role === "drink";
+  const tappable = optional || items.length > 1;
+  const on = dnIsOn(role);
+  return items.map((d, i) => {
+    const isUrl = d.photo && (String(d.photo).startsWith("http") || String(d.photo).startsWith("/"));
+    const photo = isUrl
+      ? `<div class="dish-photo-sm"><img src="${d.photo}" alt=""/></div>`
+      : `<div class="dish-photo-sm">${d.photo || "🍽"}</div>`;
+    const isSel = on && dn.sel[role] === i;
+    return `<div class="radio-item ${isSel ? "selected" : ""}" ${tappable ? `onclick="dnPick('${role}',${i})"` : ""}>
+      ${photo}
+      <div class="dish-info-sm">
+        <div class="dish-name-sm">${d.name}</div>
+        <div class="dish-meta-sm">${d.kcal ? d.kcal + " ккал" : ""}</div>
+      </div>
+      ${tappable ? `<div class="radio-circle"><div class="radio-dot"></div></div>` : ""}
+    </div>`;
+  }).join("");
+}
+
+// Крок вечері. Салат і напій: натиснути на вибране — прибрати, натиснути ще раз — повернути
+function dnStep(title, role, items) {
+  let sub = "";
+  if (role === "salad" || role === "drink") {
+    const m = dn.menu;
+    const disc = role === "salad" ? m.discNoSalad : m.discNoDrink;
+    if (!items.length)         sub = `<div class="step-subtitle">немає в меню</div>`;
+    else if (!dnIsOn(role))    sub = `<div class="step-subtitle" style="color:#e24b4a;">прибрано −${disc} грн · натисніть, щоб повернути</div>`;
+    else                       sub = `<div class="step-subtitle">натисніть ще раз на вибране, щоб прибрати</div>`;
+  }
+  return `<div class="step-block">
+    <div class="step-header"><div><div class="step-title">${title}</div>${sub}</div></div>
+    ${dnList(role, items)}
+  </div>`;
+}
+
+function dnFlagRow(key, label, note) {
+  return `<div class="radio-item ${dn[key] ? "selected" : ""}" onclick="dnFlag('${key}')">
+    <div class="dish-info-sm"><div class="dish-name-sm" style="font-size:15px;font-weight:600;">${label}</div></div>
+    ${note ? `<div class="dn-row-note" style="color:#1D9E75;">${note}</div>` : ""}
+    <div class="radio-circle"><div class="radio-dot"></div></div>
+  </div>`;
+}
+
+function renderDinner() {
+  const box = document.getElementById("dinnerContent");
+  if (dn.error) {
+    box.innerHTML = '<p style="color:#e24b4a;text-align:center;">Помилка завантаження</p>';
+    return;
+  }
+  const m = dn.menu;
+  if (!m) return;
+  const d = m.dishes;
+  if (!d.main.length) {
+    box.innerHTML = '<p class="loading-ph">Меню вечері поки що недоступне</p>';
+    return;
+  }
+
+  let html = `<a class="dn-link" onclick="showDinnerInfo()">ℹ️ Умови замовлення і доставки</a>`;
+  html += `<div class="dn-free">🚚 Доставка безкоштовна · ${m.deliveryDate}, орієнтовно 18:00–20:00</div>`;
+
+  html += dnStep("Основна страва", "main", d.main);
+  if (d.side.length) html += dnStep("Гарнір", "side", d.side);
+  html += dnStep("Салат", "salad", d.salad);
+  html += dnStep("Напій", "drink", d.drink);
+
+  html += dnFlagRow("cutlery", "🍴 Потрібні прибори", "");
+
+  html += `<div class="complex-qty-row" style="background:#F1F3FC;border-color:#3D4A8A;margin-top:6px;margin-bottom:12px;">
+    <div>
+      <div class="complex-qty-label" style="color:#3D4A8A;">Кількість вечерь</div>
+      <div class="complex-qty-price" style="color:#3D4A8A;">${dinnerPerSet()} грн / вечеря</div>
+    </div>
+    <div class="qty-control">
+      <button class="qty-btn" onclick="dnQty(-1)">−</button>
+      <span class="qty-num">${dn.qty}</span>
+      <button class="qty-btn plus" onclick="dnQty(1)" style="border-color:#3D4A8A;color:#3D4A8A;background:#F1F3FC;">+</button>
+    </div>
+  </div>`;
+
+  html += `<div class="complex-qty-row" style="background:#F1F3FC;border-color:#3D4A8A;">
+    <div>
+      <div class="complex-qty-label" style="color:#3D4A8A;">🍰 Кількість десертів</div>
+      <div class="complex-qty-price" style="color:#3D4A8A;">${m.dessert} грн / шт</div>
+    </div>
+    <div class="qty-control">
+      <button class="qty-btn" onclick="dnDessert(-1)">−</button>
+      <span class="qty-num">${dn.dessertQty}</span>
+      <button class="qty-btn plus" onclick="dnDessert(1)" style="border-color:#3D4A8A;color:#3D4A8A;background:#F1F3FC;">+</button>
+    </div>
+  </div>`;
+
+  html += `<div class="dn-notice"><b>Зверніть увагу!</b> Замовлення на вечерю, оформлені після ${m.cutoffText}, доставляються наступного дня орієнтовно з 18:00 до 20:00. Доставка безкоштовна.</div>`;
+
+  html += `<div class="dn-total"><span>Разом:</span><span>${dinnerTotal()} грн</span></div>
+    <button class="dn-btn" id="dinnerBtn" onclick="submitDinner()" ${dn.sending ? "disabled" : ""}>${dn.sending ? "Відправляємо..." : "Підтвердити замовлення"}</button>`;
+
+  box.innerHTML = html;
+}
+
+function dnPick(role, i) {
+  if (role === "salad" || role === "drink") {
+    const key = role === "salad" ? "saladOn" : "drinkOn";
+    if (dn[key] && dn.sel[role] === i) dn[key] = false;      // натиснули на вибране — прибрати
+    else { dn.sel[role] = i; dn[key] = true; }               // обрали (або повернули)
+  } else {
+    dn.sel[role] = i;
+  }
+  renderDinner();
+}
+function dnFlag(key) { dn[key] = !dn[key]; renderDinner(); }
+function dnQty(delta) { dn.qty = Math.min(99, Math.max(1, dn.qty + delta)); renderDinner(); }
+function dnDessert(delta) { dn.dessertQty = Math.min(99, Math.max(0, dn.dessertQty + delta)); renderDinner(); }
+
+// Спливаюче вікно з умовами
+function showDinnerInfo() {
+  const m = dn.menu;
+  let t = "";
+  if (m) {
+    t += `<p style="margin-bottom:10px;">Повний комплект — ${m.dishes.side.length ? "основна страва, гарнір, салат і напій" : "основна страва, салат і напій"} — <b>${m.price} грн</b>. Салат і напій можна прибрати галочками, ціна зміниться автоматично.</p>`;
+  }
+  t += `<p style="margin-bottom:10px;">Меню вечері доступне постійно.` +
+       (m ? ` Замовлення, оформлені до ${m.cutoffText}, потрапляють на поточний день, а після ${m.cutoffText} — на наступний.` : "") + `</p>`;
+  t += `<p>Орієнтовний час доставки — з 18:00 до 20:00. <b>Доставка безкоштовна.</b></p>`;
+  document.getElementById("dinnerInfoText").innerHTML = t;
+  document.getElementById("dinnerInfoModal").style.display = "flex";
+}
+function maybeShowDinnerInfo() {
+  if (!localStorage.getItem("dinnerInfoSeen")) showDinnerInfo();
+}
+function closeDinnerInfo() {
+  document.getElementById("dinnerInfoModal").style.display = "none";
+  localStorage.setItem("dinnerInfoSeen", "1");
+}
+
+async function submitDinner() {
+  if (dn.sending || !dn.menu) return;
+  const name    = document.getElementById("clientName").value.trim();
+  const phone   = document.getElementById("clientPhone").value.trim();
+  const address = document.getElementById("clientAddress").value.trim();
+  if (!name || !phone || !address) {
+    showToast("Вкажіть ім'я, телефон і адресу вгорі сторінки", true);
+    return;
+  }
+
+  const d = dn.menu.dishes;
+  const payload = {
+    name, phone, address,
+    qty:     dn.qty,
+    main:    d.main[dn.sel.main].name.trim(),
+    side:    d.side.length ? d.side[dn.sel.side].name.trim() : null,
+    salad:   dn.saladOn ? d.salad[dn.sel.salad].name.trim() : null,
+    drink:   dn.drinkOn ? d.drink[dn.sel.drink].name.trim() : null,
+    dessertQty: dn.dessertQty,
+    cutlery: dn.cutlery
+  };
+
+  dn.sending = true;
+  renderDinner();
+  try {
+    const res = await fetch(SCRIPT_URL + "?action=dinnerorder&data=" + encodeURIComponent(JSON.stringify(payload)));
+    const result = await res.json();
+    if (result.status !== "ok") {
+      showToast("Помилка: " + (result.message || "спробуйте ще раз"), true);
+      dn.sending = false; renderDinner();
+      return;
+    }
+
+    localStorage.setItem("clientData", JSON.stringify({ name, phone, address }));
+
+    const parts = ["Основна: " + payload.main];
+    if (payload.side) parts.push("Гарнір: " + payload.side);
+    parts.push(payload.salad ? "Салат: " + payload.salad : "без салату");
+    parts.push(payload.drink ? "Напій: " + payload.drink : "без напою");
+    if (payload.dessertQty) parts.push("десерти × " + payload.dessertQty);
+    if (payload.cutlery) parts.push("прибори");
+    document.getElementById("receiptItems").innerHTML =
+      `<div class="receipt-item"><span>Вечеря додому × ${payload.qty}</span><span style="font-weight:500;">${result.total} грн</span></div>` +
+      `<div style="font-size:12px;color:#999;padding:2px 0 6px;">${parts.join(" · ")}</div>` +
+      `<div style="font-size:12px;color:#999;padding:2px 0;">Доставка ${result.deliveryDate}, орієнтовно 18:00–20:00. Доставка безкоштовна.</div>`;
+    document.getElementById("receiptTotal").textContent = result.total + " грн";
+    document.getElementById("receiptModal").style.display = "flex";
+
+    // Скидаємо форму вечері
+    dn.qty = 1; dn.dessertQty = 0; dn.cutlery = false;
+    dn.saladOn = d.salad.length > 0;
+    dn.drinkOn = d.drink.length > 0;
+    dn.sending = false;
+    document.getElementById("acc-dinner").classList.remove("open");
+    renderDinner();
+  } catch (err) {
+    showToast("Помилка з'єднання. Спробуйте ще раз", true);
+    dn.sending = false; renderDinner();
+  }
+}
+
+loadDinner();
+</script>
+</body>
+</html>
